@@ -50,6 +50,7 @@
     "lodash": "^4.17.4",
     "material-icons": "^0.1.0",
     "node-sass": "^4.5.3",
+    "query-string": "^4.3.4",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-redux": "^5.0.4",

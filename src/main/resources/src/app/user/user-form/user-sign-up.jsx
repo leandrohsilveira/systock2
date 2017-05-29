@@ -1,18 +1,15 @@
 import React, {Component} from 'react'
-import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
+import {toastr} from 'react-redux-toastr'
 
-import {UserForm, signUp} from '../'
+import {UserForm, UserService} from '../'
 
-const mapStateToProps = state => ({})
-const mapDispatchToProps = dispatch => bindActionCreators({signUp}, dispatch)
-
-@connect(mapStateToProps, mapDispatchToProps)
 export default class UserSignUp extends Component {
 
     handleSignUp = (values) => {
-        const {signUp} = this.props
-        signUp(values)
+        UserService.save(values)
+                    .then(resp => {
+                        toastr.success('Success', 'User registration successful')
+                    })
     }
 
     render() {
@@ -20,7 +17,7 @@ export default class UserSignUp extends Component {
         return (
             <div className="content">
                 <div className="row center-xs">
-                    <div className="col-xs-12 col-sm-10 col-md-8 col-lg-6">
+                    <div className="col-xs-12 col-sm-9 col-md-6">
                         <UserForm passwordConfirmation={true} title="Sign up" onSubmit={handleSignUp}></UserForm>
                     </div>
                 </div>

@@ -5,11 +5,7 @@ const INITIAL_STATE = {
 }
 
 export default (state = INITIAL_STATE, action) => {
-    switch (action.type) {
-        case USER.SIGNED_UP:
-            console.debug(action)
-            return state;
-    
+    switch (action.type) { 
         default:
             return state;
     }

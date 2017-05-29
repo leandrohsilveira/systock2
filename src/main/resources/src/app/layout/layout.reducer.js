@@ -1,4 +1,4 @@
-import {LAYOUT} from './layout.actions'
+import {LAYOUT} from './'
 
 const INITIAL_STATE = {
     title: 'Dashboard',

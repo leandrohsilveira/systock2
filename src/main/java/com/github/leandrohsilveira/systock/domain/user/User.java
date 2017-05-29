@@ -23,59 +23,61 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @RequiredArgsConstructor
-@ToString(callSuper=true)
-@EqualsAndHashCode(callSuper=true)
-@Builder(toBuilder=true)
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Builder(toBuilder = true)
 @Document
 public class User extends AbstractDomain {
 
 	private static final long serialVersionUID = -2502492981030986956L;
-	
+
 	@NonNull
 	private String username;
-	
+
 	@NonNull
-	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)    
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String password;
-	
+
 	public UserDetails toUserDetails() {
 		return new UserDetails() {
-			
+
+			private static final long serialVersionUID = 546950498451218150L;
+
 			@Override
 			public boolean isEnabled() {
 				return true;
 			}
-			
+
 			@Override
 			public boolean isCredentialsNonExpired() {
 				return true;
 			}
-			
+
 			@Override
 			public boolean isAccountNonLocked() {
 				return true;
 			}
-			
+
 			@Override
 			public boolean isAccountNonExpired() {
 				return true;
 			}
-			
+
 			@Override
 			public String getUsername() {
 				return username;
 			}
-			
+
 			@Override
 			public String getPassword() {
 				return password;
 			}
-			
+
 			@Override
 			public Collection<? extends GrantedAuthority> getAuthorities() {
 				return Arrays.asList();
 			}
 		};
 	}
-	
+
 }
