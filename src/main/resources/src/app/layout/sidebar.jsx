@@ -66,7 +66,8 @@ export default class Sidebar extends Component {
                         </div>
                     </div>
                 </AppBar>
-                <NavMenuItem href="/" onClick={onNavigate} iconClass="home" value="Home"></NavMenuItem>,
+                <NavMenuItem href="/" onClick={onNavigate} iconClass="home" value="Home"></NavMenuItem>
+                <NavMenuItem href="/users" onClick={onNavigate} iconClass="group" value="Users"></NavMenuItem>
             </div>
         )
     }
