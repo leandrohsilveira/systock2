@@ -1,28 +1,27 @@
 package com.github.leandrohsilveira.systock.domain.user;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.leandrohsilveira.systock.domain.AbstractDomain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@RequiredArgsConstructor
+@AllArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @Builder(toBuilder = true)
@@ -38,46 +37,18 @@ public class User extends AbstractDomain {
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String password;
 
+	@Transient
+	private String currentPassword;
+
+	@Transient
+	private String confirmPassword;
+
+	private List<Permission> permissions;
+
+	private Profile profile;
+
 	public UserDetails toUserDetails() {
-		return new UserDetails() {
-
-			private static final long serialVersionUID = 546950498451218150L;
-
-			@Override
-			public boolean isEnabled() {
-				return true;
-			}
-
-			@Override
-			public boolean isCredentialsNonExpired() {
-				return true;
-			}
-
-			@Override
-			public boolean isAccountNonLocked() {
-				return true;
-			}
-
-			@Override
-			public boolean isAccountNonExpired() {
-				return true;
-			}
-
-			@Override
-			public String getUsername() {
-				return username;
-			}
-
-			@Override
-			public String getPassword() {
-				return password;
-			}
-
-			@Override
-			public Collection<? extends GrantedAuthority> getAuthorities() {
-				return Arrays.asList();
-			}
-		};
+		return new UserDetailsImpl(this);
 	}
 
 }
