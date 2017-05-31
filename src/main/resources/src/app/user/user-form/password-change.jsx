@@ -2,8 +2,10 @@ import React, {Component} from 'react'
 import {reduxForm, formValueSelector} from 'redux-form'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
+import {toastr} from 'react-redux-toastr'
 
 import Card from 'react-toolbox/lib/card/Card'
+import CardTitle from 'react-toolbox/lib/card/CardTitle'
 import CardText from 'react-toolbox/lib/card/CardText'
 import CardActions from 'react-toolbox/lib/card/CardActions'
 import Button from 'react-toolbox/lib/button/Button'
@@ -18,47 +20,64 @@ const mapDispatchToProps = dispatch => bindActionCreators({changeTitle}, dispatc
 
 @reduxForm({form: USER_FORM_NAME})
 @connect(mapStateToProps, mapDispatchToProps)
-export default class UserForm extends Component {
-    
-    componentDidMount() {
-        const {changeTitle} = this.props
-        changeTitle("Sign up")
+export default class PasswordChange extends Component {
+
+    state = {
+        user: {}
     }
 
-    handleSignUp = (values) => {
-        const {history, submitRedirect = '/users'} = this.props
-        UserService.save(values)
-                    .then(resp => {
-                        toastr.success('Success', 'User registration successful')
+    componentDidMount() {
+        const {changeTitle, match, history, submitRedirect = '/users'} = this.props
+        const {id} = match.params
+        UserService.findOne(id)
+                    .then(user => {
+                        this.setState({user})
+                        changeTitle("Change password")
+                    })
+                    .catch(resp => {
+                        this.handleError(resp)
                         history.push(submitRedirect)
                     })
-                    .catch((resp) => {
-                        const {status, error, message} = resp.data
-                        toastr.error(`${status}: ${error}`, message)
-                    })
+    }
+
+    handleError(resp) {
+        const {status, error, message} = resp.data
+        toastr.error(`${status}: ${error}`, message)
+    }
+
+    handlePasswordChangeSubmit = (values) => {
+        const {match, history, submitRedirect = '/users'} = this.props
+        const {id} = match.params
+        UserService.save({...values, id})
+                .then(resp => {
+                    toastr.success('Success', 'Password change successful')
+                    history.push(submitRedirect)
+                })
+                .catch(resp => this.handleError(resp))
+
     }
 
     render() {
         const {password, handleSubmit, invalid} = this.props
-        const {handleSignUp} = this
+        const {user} = this.state
+        const {handlePasswordChangeSubmit} = this
         return (
             <div className="content">
                 <div className="row center-xs">
                     <div className="col-xs-12 col-sm-9 col-md-6">
-                        <form noValidate onSubmit={handleSubmit(values => handleSignUp(values))}>
+                        <form noValidate onSubmit={handleSubmit(values => handlePasswordChangeSubmit(values))}>
                             <Card>
+                                <CardTitle title={user.profile && [user.profile.firstName, user.profile.lastName].filter(v => !!v).join(' ')}
+                                            subtitle={user.profile && user.profile.email} />
                                 <CardText>
-                                    <Field name="username" label="Username" validators={{required: true, text: {min: 3}}} />
+                                    <Field name="currentPassword" label="Current" type="password" validators={{required: true, text: {min: 6}}} />
                                     <Field name="password" label="Password" type="password" validators={{required: true, text: {min: 6}}} />
                                     <Field name="confirmPassword" label="Confirm password" type="password" validators={{required: true, text: {min: 6}, match: {name: "Password", value: password}}} />
-                                    <Field name="profile.firstName" label="First name" validators={{required: true, text: {min: 2}}} />
-                                    <Field name="profile.lastName" label="Last name" validators={{text: {min: 2}}} />
-                                    <Field name="profile.email" label="E-mail" type="email" validators={{required: true, email: true}} />
                                 </CardText>
                                 <CardActions>
                                     <div className="flex flex-row-reverse">
                                         <div className="flex flex-self-center">
-                                            <Button disabled={invalid} type="submit" label="Sign-up" icon="send" raised primary />
+                                            <Button disabled={invalid} type="submit" label="Change" icon="send" raised primary />
                                         </div>
                                     </div>
                                 </CardActions>
