@@ -19,8 +19,6 @@ import com.github.leandrohsilveira.systock.domain.user.exceptions.UsernameAlread
 @RepositoryEventHandler(User.class)
 public class UserRepositoryEventHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(UserRepositoryEventHandler.class);
-
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
@@ -39,23 +37,25 @@ public class UserRepositoryEventHandler {
 	@HandleBeforeSave
 	public void handleUserUpdate(User user) {
 		User storedUser = userRepository.findOne(user.getId());
-		if (user.getCurrentPassword() == null && user.getConfirmPassword() == null) {
-			// keeps the last password
-			user.setPassword(storedUser.getPassword());
-		} else if (!Objects.equals(storedUser.getPassword(), user.getPassword())) {
-			// password change request
-			logger.debug("{}", user);
+		user.setUsername(storedUser.getUsername());
+		if(!Objects.equals(storedUser.getPassword(), user.getPassword())) {
 			if (user.getCurrentPassword() != null && user.getConfirmPassword() != null) {
+				// password change request
 				validateCurrentPassword(user, storedUser);
+			} else {
+				// keeps the last password
+				user.setPassword(storedUser.getPassword());
 			}
 		}
 	}
 
 	private void validateCurrentPassword(User user, User storedUser) {
-		if (passwordEncoder.matches(user.getCurrentPassword(), storedUser.getPassword())) {
-			confirmPassword(user);
-		} else {
-			throw new InvalidCurrentPasswordException();
+		if (user.getCurrentPassword() != null) {
+			if (passwordEncoder.matches(user.getCurrentPassword(), storedUser.getPassword())) {
+				confirmPassword(user);
+			} else {
+				throw new InvalidCurrentPasswordException();
+			}
 		}
 	}
 	
