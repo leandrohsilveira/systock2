@@ -1,7 +1,7 @@
 import {LAYOUT} from './'
 
 const INITIAL_STATE = {
-    title: 'Dashboard',
+    title: '',
     sideBarOpen: false,
     appBarActions: null
 }
