@@ -14,14 +14,10 @@ import java.net.URI;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,14 +27,16 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.github.leandrohsilveira.systock.SystockApplication;
 import com.github.leandrohsilveira.systock.domain.user.User;
 import com.github.leandrohsilveira.systock.domain.user.UserRepository;
+import com.github.leandrohsilveira.systock.utils.AbstractRepositoryTest;
+
+import lombok.extern.slf4j.Slf4j;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SystockApplication.class)
 @EnableAutoConfiguration
 @AutoConfigureMockMvc
-public class UserRepositoryTest {
-
-	private static final Logger logger = LoggerFactory.getLogger(UserRepositoryTest.class);
+@Slf4j
+public class UserRepositoryTest extends AbstractRepositoryTest {
 
 	@Autowired
 	private UserRepository userRepository;
@@ -48,16 +46,18 @@ public class UserRepositoryTest {
 
 	@Autowired
 	private MockMvc mockMvc;
-
-	private static final Authentication AUTH = new UsernamePasswordAuthenticationToken("silveira", "silveira");
-
+	
 	@Test
 	public void postTest() throws Exception {
-		String userJson = new JSONObject().put("username", "silveira").put("password", "silveira").put("confirmPassword", "silveira")
+		String username = "postTest";
+		String userJson = new JSONObject() //
+				.put("username", username) //
+				.put("password", "123456") //
+				.put("confirmPassword", "123456") //
 				.toString();
 
 		printSeparator();
-		logger.info("Posting user: {}", userJson);
+		log.info("Posting user: {}", userJson);
 		printSeparator();
 
 		MockHttpServletRequestBuilder post = post(new URI("/api/users"));
@@ -66,14 +66,34 @@ public class UserRepositoryTest {
 		result.andDo(print());
 		result.andExpect(status().isCreated());
 	}
-
+	
 	@Test
-	public void postTestPasswordConfirmationFailure() throws Exception {
-		String userJson = new JSONObject().put("username", "silveira").put("password", "silveira").put("confirmPassword", "silveira2")
+	public void postTestUsernameConflictFailure() throws Exception {
+		String username = "postTestUsernameConflictFailure";
+		userRepository.save(User.builder().username(username).password("123456").build());
+		
+		String userJson = new JSONObject().put("username", username).put("password", "123456").put("confirmPassword", "123456")
 				.toString();
 
 		printSeparator();
-		logger.info("Posting user: {} forcing CONFIRMATION FAILURE (Bad request)", userJson);
+		log.info("Posting user: {} forcing CONFIRMATION FAILURE (Bad request)", userJson);
+		printSeparator();
+
+		MockHttpServletRequestBuilder post = post(new URI("/api/users"));
+		post.content(userJson);
+		ResultActions result = mockMvc.perform(post);
+		result.andDo(print());
+		result.andExpect(status().isConflict());
+	}
+	
+	@Test
+	public void postTestPasswordConfirmationFailure() throws Exception {
+		String username = "postTestPasswordConfirmationFailure";
+		String userJson = new JSONObject().put("username", username).put("password", "123456").put("confirmPassword", "1234567")
+				.toString();
+
+		printSeparator();
+		log.info("Posting user: {} forcing CONFIRMATION FAILURE (Bad request)", userJson);
 		printSeparator();
 
 		MockHttpServletRequestBuilder post = post(new URI("/api/users"));
@@ -85,11 +105,12 @@ public class UserRepositoryTest {
 
 	@Test
 	public void getTest() throws Exception {
-		User user = User.builder().username("silveira").password("silveira").build();
+		String username = "getTest";
+		User user = User.builder().username(username).password("123456").build();
 		User savedUser = saveUser(user);
 
 		printSeparator();
-		logger.info("Getting user: {}", savedUser.getId());
+		log.info("Getting user: {}", savedUser.getId());
 		printSeparator();
 
 		MockHttpServletRequestBuilder get = get(new URI("/api/users/".concat(savedUser.getId())));
@@ -97,24 +118,25 @@ public class UserRepositoryTest {
 		result.andDo(print());
 		result.andExpect(status().isOk());
 		result.andExpect(jsonPath("$").exists());
-		result.andExpect(jsonPath("$.username").value(savedUser.getUsername()));
+		result.andExpect(jsonPath("$.username").value(username));
 		result.andExpect(jsonPath("$.password").doesNotExist());
 	}
 
 	@Test
 	public void putTest() throws Exception {
-		User user = User.builder().username("silveira").password("silveira").build();
+		String username = "putTest";
+		User user = User.builder().username(username).password("123456").build();
 		User savedUser = saveUser(user);
 
 		String userJson = new JSONObject() //
-				.put("username", "silveira") //
-				.put("currentPassword", "silveira") //
-				.put("password", "silveira2") //
-				.put("confirmPassword", "silveira2") //
+				.put("username", username) //
+				.put("currentPassword", "123456") //
+				.put("password", "654321") //
+				.put("confirmPassword", "654321") //
 				.toString();
 
 		printSeparator();
-		logger.info("Putting user id {}: {}", savedUser.getId(), userJson);
+		log.info("Putting user id {}: {}", savedUser.getId(), userJson);
 		printSeparator();
 
 		MockHttpServletRequestBuilder put = put(new URI("/api/users/".concat(savedUser.getId())));
@@ -126,25 +148,26 @@ public class UserRepositoryTest {
 
 		User updatedUser = userRepository.findOne(savedUser.getId());
 		assertThat(updatedUser).isNotNull();
-		assertThat(updatedUser.getUsername()).isEqualTo("silveira");
-		assertThat(checkPassword("silveira", updatedUser)).isFalse();
-		assertThat(checkPassword("silveira2", updatedUser)).isTrue();
+		assertThat(updatedUser.getUsername()).isEqualTo(username);
+		assertThat(checkPassword("123456", updatedUser)).isFalse();
+		assertThat(checkPassword("654321", updatedUser)).isTrue();
 	}
 
 	@Test
 	public void putTestPasswordConfirmationFailure() throws Exception {
-		User user = User.builder().username("silveira").password("silveira").build();
+		String username = "putTestPasswordConfirmationFailure";
+		User user = User.builder().username(username).password("123456").build();
 		User savedUser = saveUser(user);
 
 		String userJson = new JSONObject() //
-				.put("username", "silveira") //
-				.put("currentPassword", "silveira") //
-				.put("password", "silveira2") //
-				.put("confirmPassword", "silveira3") //
+				.put("username", username) //
+				.put("currentPassword", "123456") //
+				.put("password", "1234567") //
+				.put("confirmPassword", "12345678") //
 				.toString();
 
 		printSeparator();
-		logger.info("Putting user id {}: {}", savedUser.getId(), userJson);
+		log.info("Putting user id {}: {}", savedUser.getId(), userJson);
 		printSeparator();
 
 		MockHttpServletRequestBuilder put = put(new URI("/api/users/".concat(savedUser.getId())));
@@ -157,18 +180,19 @@ public class UserRepositoryTest {
 
 	@Test
 	public void putTestInvalidCurrentPassword() throws Exception {
-		User user = User.builder().username("silveira").password("silveira").build();
+		String username = "putTestInvalidCurrentPassword";
+		User user = User.builder().username(username).password("123456").build();
 		User savedUser = saveUser(user);
 
 		String userJson = new JSONObject() //
-				.put("username", "silveira") //
-				.put("currentPassword", "silveira3") //
-				.put("password", "silveira2") //
-				.put("confirmPassword", "silveira2") //
+				.put("username", username) //
+				.put("currentPassword", "1234567") //
+				.put("password", "654321") //
+				.put("confirmPassword", "654321") //
 				.toString();
 
 		printSeparator();
-		logger.info("Putting user id {}: {}", savedUser.getId(), userJson);
+		log.info("Putting user id {}: {}", savedUser.getId(), userJson);
 		printSeparator();
 
 		MockHttpServletRequestBuilder put = put(new URI("/api/users/".concat(savedUser.getId())));
@@ -180,42 +204,22 @@ public class UserRepositoryTest {
 	}
 
 	@Test
-	public void putTestBadRequest() throws Exception {
-		User user = User.builder().username("silveira").password("silveira").build();
-		User savedUser = saveUser(user);
-
-		String id = savedUser.getId();
-
-		String userJson = new JSONObject().put("username", "silveira2").toString();
-
-		printSeparator();
-		logger.info("Putting user id {} forcing BAD REQUEST: {}", id, userJson);
-		printSeparator();
-
-		MockHttpServletRequestBuilder put = put(new URI("/api/users/".concat(id)));
-		put.content(userJson);
-		ResultActions result = mockMvc.perform(put);
-		result.andDo(print());
-		result.andExpect(status().isBadRequest());
-
-		User updatedUser = userRepository.findOne(id);
-		assertThat(updatedUser).isNotNull();
-		assertThat(updatedUser.getUsername()).isEqualTo("silveira");
-		assertThat(checkPassword("silveira", updatedUser)).isTrue();
-	}
-
-	@Test
 	public void patchTest() throws Exception {
-		User user = User.builder().username("silveira").password("silveira").build();
+		String username = "patchTest";
+		User user = User.builder().username(username).password("123456").build();
 		User savedUser = saveUser(user);
-		assertThat(checkPassword("silveira", savedUser)).isTrue();
+		assertThat(checkPassword("123456", savedUser)).isTrue();
 
 		String id = savedUser.getId();
 
-		String userJson = new JSONObject().put("username", "silveira2").toString();
+		String userJson = new JSONObject() //
+					.put("currentPassword", "123456") //
+					.put("password", "654321") //
+					.put("confirmPassword", "654321") //
+					.toString();
 
 		printSeparator();
-		logger.info("Patching user id {}: {}", id, userJson);
+		log.info("Patching user id {}: {}", id, userJson);
 		printSeparator();
 
 		MockHttpServletRequestBuilder patch = patch(new URI("/api/users/".concat(id)));
@@ -226,8 +230,8 @@ public class UserRepositoryTest {
 
 		User updatedUser = userRepository.findOne(id);
 		assertThat(updatedUser).isNotNull();
-		assertThat(checkPassword("silveira", updatedUser)).isTrue();
-		assertThat(updatedUser.getPassword()).isEqualTo(savedUser.getPassword());
+		assertThat(checkPassword("123456", updatedUser)).isFalse();
+		assertThat(checkPassword("654321", updatedUser)).isTrue();
 	}
 
 	private User saveUser(User user) {
@@ -238,10 +242,6 @@ public class UserRepositoryTest {
 	private boolean checkPassword(String rawPassword, User user) {
 		return passwordEncoder.matches(rawPassword, user.getPassword());
 
-	}
-
-	private void printSeparator() {
-		logger.info("****************************************************************************");
 	}
 
 }

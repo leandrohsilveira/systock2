@@ -13,12 +13,13 @@ import org.springframework.stereotype.Component;
 
 import com.github.leandrohsilveira.systock.domain.user.exceptions.InvalidCurrentPasswordException;
 import com.github.leandrohsilveira.systock.domain.user.exceptions.PasswordConfirmationException;
+import com.github.leandrohsilveira.systock.domain.user.exceptions.UsernameAlreadyInUseException;
 
 @Component
 @RepositoryEventHandler(User.class)
-public class UserEventHandler {
+public class UserRepositoryEventHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(UserEventHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(UserRepositoryEventHandler.class);
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -28,12 +29,12 @@ public class UserEventHandler {
 
 	@HandleBeforeCreate
 	public void handleUserCreate(User user) {
-		if (Objects.equals(user.getPassword(), user.getConfirmPassword())) {
-			user.setPassword(passwordEncoder.encode(user.getPassword()));
-		} else {
-			throw new PasswordConfirmationException();
+		if(userRepository.findOneByUsername(user.getUsername()).isPresent()) {
+			throw new UsernameAlreadyInUseException();
 		}
+		confirmPassword(user);
 	}
+
 
 	@HandleBeforeSave
 	public void handleUserUpdate(User user) {
@@ -45,12 +46,24 @@ public class UserEventHandler {
 			// password change request
 			logger.debug("{}", user);
 			if (user.getCurrentPassword() != null && user.getConfirmPassword() != null) {
-				if (passwordEncoder.matches(user.getCurrentPassword(), storedUser.getPassword())) {
-					handleUserCreate(user);
-				} else {
-					throw new InvalidCurrentPasswordException();
-				}
+				validateCurrentPassword(user, storedUser);
 			}
+		}
+	}
+
+	private void validateCurrentPassword(User user, User storedUser) {
+		if (passwordEncoder.matches(user.getCurrentPassword(), storedUser.getPassword())) {
+			confirmPassword(user);
+		} else {
+			throw new InvalidCurrentPasswordException();
+		}
+	}
+	
+	private void confirmPassword(User user) {
+		if (Objects.equals(user.getPassword(), user.getConfirmPassword())) {
+			user.setPassword(passwordEncoder.encode(user.getPassword()));
+		} else {
+			throw new PasswordConfirmationException();
 		}
 	}
 }
