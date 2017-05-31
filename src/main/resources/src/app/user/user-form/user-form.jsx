@@ -2,6 +2,7 @@ import React, {Component} from 'react'
 import {reduxForm, formValueSelector} from 'redux-form'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
+import {toastr} from 'react-redux-toastr'
 
 import Card from 'react-toolbox/lib/card/Card'
 import CardText from 'react-toolbox/lib/card/CardText'
@@ -26,15 +27,14 @@ export default class UserForm extends Component {
     }
 
     handleSignUp = (values) => {
-        const {history, submitRedirect = '/users'} = this.props
+        const {history, submitRedirect = '/'} = this.props
         UserService.save(values)
                     .then(resp => {
                         toastr.success('Success', 'User registration successful')
                         history.push(submitRedirect)
                     })
                     .catch((resp) => {
-                        const {status, error, message} = resp.data
-                        toastr.error(`${status}: ${error}`, message)
+                        UserService.handleError(resp)
                     })
     }
 
