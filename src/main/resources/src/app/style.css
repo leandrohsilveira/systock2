@@ -135,8 +135,18 @@ a.nav-menu-item:visited {
     height: 100%;
 }
 
+.flex-column-reverse {
+    flex-direction: column-reverse;
+    height: 100%;
+}
+
 .flex-row {
     flex-direction: row;
+    width: 100%;
+}
+
+.flex-row-reverse {
+    flex-direction: row-reverse;
     width: 100%;
 }
 
