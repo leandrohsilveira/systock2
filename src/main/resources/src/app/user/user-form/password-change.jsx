@@ -27,7 +27,7 @@ export default class PasswordChange extends Component {
     }
 
     componentDidMount() {
-        const {changeTitle, match, history, submitRedirect = '/users'} = this.props
+        const {changeTitle, match, history, submitRedirect = '/'} = this.props
         const {id} = match.params
         UserService.findOne(id)
                     .then(user => {
@@ -35,25 +35,20 @@ export default class PasswordChange extends Component {
                         changeTitle("Change password")
                     })
                     .catch(resp => {
-                        this.handleError(resp)
+                        UserService.handleError(resp)
                         history.push(submitRedirect)
                     })
     }
 
-    handleError(resp) {
-        const {status, error, message} = resp.data
-        toastr.error(`${status}: ${error}`, message)
-    }
-
     handlePasswordChangeSubmit = (values) => {
-        const {match, history, submitRedirect = '/users'} = this.props
+        const {match, history, submitRedirect = '/'} = this.props
         const {id} = match.params
         UserService.save({...values, id})
                 .then(resp => {
                     toastr.success('Success', 'Password change successful')
                     history.push(submitRedirect)
                 })
-                .catch(resp => this.handleError(resp))
+                .catch(resp => UserService.handleError(resp))
 
     }
 
@@ -67,8 +62,8 @@ export default class PasswordChange extends Component {
                     <div className="col-xs-12 col-sm-9 col-md-6">
                         <form noValidate onSubmit={handleSubmit(values => handlePasswordChangeSubmit(values))}>
                             <Card>
-                                <CardTitle title={user.profile && [user.profile.firstName, user.profile.lastName].filter(v => !!v).join(' ')}
-                                            subtitle={user.profile && user.profile.email} />
+                                <CardTitle title={UserService.getFullName(user.profile)}
+                                            subtitle={user.username} />
                                 <CardText>
                                     <Field name="currentPassword" label="Current" type="password" validators={{required: true, text: {min: 6}}} />
                                     <Field name="password" label="Password" type="password" validators={{required: true, text: {min: 6}}} />
