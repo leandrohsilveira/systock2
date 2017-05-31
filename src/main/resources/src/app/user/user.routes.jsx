@@ -2,7 +2,7 @@ import React from 'react'
 
 import {Route} from 'react-router-dom'
 
-import {UserForm, PasswordChange, UserList} from './'
+import {UserForm, PasswordChange, UserList, ProfileForm} from './'
 
 export default ({prefix = '/'}) => (
     <div>
@@ -11,6 +11,9 @@ export default ({prefix = '/'}) => (
         )} />
         <Route exact path={`${prefix}users/:id/password`} render={props => (
             <PasswordChange {...props} submitRedirect={`${prefix}users`} />
+        )} />
+        <Route exact path={`${prefix}users/:id/profile`} render={props => (
+            <ProfileForm {...props} submitRedirect={`${prefix}users`} />
         )} />
         <Route exact path={`${prefix}users`} component={UserList} />
     </div>
