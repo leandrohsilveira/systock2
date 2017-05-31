@@ -1,5 +1,8 @@
 import React, {Component} from 'react'
+import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 import {Link} from 'react-router-dom'
+import {toastr} from 'react-redux-toastr'
 
 import queryString from 'query-string'
 
@@ -13,10 +16,17 @@ import CardText from 'react-toolbox/lib/card/CardText'
 import CardActions from 'react-toolbox/lib/card/CardActions'
 import ProgressBar from 'react-toolbox/lib/progress_bar/ProgressBar'
 import IconButton from 'react-toolbox/lib/button/IconButton'
+import IconMenu from 'react-toolbox/lib/menu/IconMenu'
+import MenuItem from 'react-toolbox/lib/menu/MenuItem'
 
 import {UserService} from '../'
-import {Paginator} from '../../widgets'
+import {Paginator, NavMenuItem} from '../../widgets'
+import {changeTitle} from '../../layout'
 
+const mapStateToProps = state => ({})
+const mapDispatchToProps = dispatch => bindActionCreators({changeTitle}, dispatch)
+
+@connect(mapStateToProps, mapDispatchToProps)
 export default class UserList extends Component {
 
     state = {
@@ -27,7 +37,9 @@ export default class UserList extends Component {
         page: {}
     }
 
-    componentWillMount() {
+    componentDidMount() {
+        const {changeTitle} = this.props
+        changeTitle('Users list')
         this.load(this.props)
     }
 
@@ -60,10 +72,16 @@ export default class UserList extends Component {
                         <div className="flex flex-row flex-space-between">
                             <div className="flex flex-self-center"></div>
                             <div className="flex flex-self-center">
-                                {selected && selected.length && (
-                                    <Link to={`${users[selected]._links.app_self.href}/password`}>
-                                        <IconButton icon="edit" />
-                                    </Link>
+                                {selected && !!selected.length && (
+                                    <div>
+                                        <Link to={`${users[selected]._links.app_self.href}/profile`}>
+                                            <IconButton icon="edit" />
+                                        </Link>
+                                        <IconMenu icon='more_vert' position='topRight' menuRipple>
+                                            <NavMenuItem iconClass="vpn_key" value="Change password" href={`${users[selected]._links.app_self.href}/password`}  />
+                                            <NavMenuItem iconClass="delete" value="Delete" href={`${users[selected]._links.app_self.href}/password`}  />
+                                        </IconMenu>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -82,7 +100,7 @@ export default class UserList extends Component {
                             </TableHead>
                             {users.length > 0 ? users.map((user, index) => (
                                     <TableRow key={user.username} selected={(selected).indexOf(index) !== -1}>
-                                        <TableCell>{[user.profile && user.profile.firstName, user.profile && user.profile.lastName].filter(v => !!v).join(' ')}</TableCell>
+                                        <TableCell>{UserService.getFullName(user.profile)}</TableCell>
                                         <TableCell>{user.username}</TableCell>
                                         <TableCell>{user.profile && user.profile.email}</TableCell>
                                     </TableRow>
