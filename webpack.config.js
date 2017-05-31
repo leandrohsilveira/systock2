@@ -9,7 +9,7 @@ module.exports = {
     entry: `.${src}/start.jsx`,
     output: {
         path: __dirname + dest,
-        filename: './bundle.js'
+        filename: './static/bundle.js'
     },
     devServer: {
         port: 9000,
@@ -29,7 +29,7 @@ module.exports = {
         }
     },
     plugins: [
-        new ExtractTextPlugin('bundle.css')
+        new ExtractTextPlugin('static/bundle.css')
     ],
     devtool: 'source-map',
     module: {
@@ -46,7 +46,7 @@ module.exports = {
             loader: ExtractTextPlugin.extract('style-loader', 'css-loader')
         }, {
             test: /\.woff|.woff2|.ttf|.eot|.svg|.png|.jpg*.*$/,
-            loader: 'file'
+            loader: 'file?name=/static/[name].[ext]'
         }]
     }
 }
