@@ -1,4 +1,5 @@
 import axios from 'axios'
+import {toastr} from 'react-redux-toastr'
 
 export default class UserService {
 
@@ -31,5 +32,14 @@ export default class UserService {
                     })
     }
     
+    static getFullName(profile) {
+        return profile && [profile.firstName, profile.lastName].filter(v => !!v).join(' ')
+    }
+
+    static handleError(resp) {
+        const {status, error, message} = resp.data
+        toastr.error(`${status}: ${error}`, message)
+    }
+
 
 }
